@@ -1,7 +1,7 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { Heart, MessageCircle, Sparkles, Home, Users, User } from "lucide-react"
+import React, { useState, useEffect } from "react"
+import { Heart, MessageCircle, Sparkles, Globe, Users, User, Phone } from "lucide-react"
 
 interface Match {
   id: string
@@ -107,13 +107,23 @@ const maleProfiles = [
 export default function DatingAppLanding() {
   const [matches, setMatches] = useState<Match[]>([])
   const [onlineUsers, setOnlineUsers] = useState(10247)
-  const [activeChats, setActiveChats] = useState(24588)
+  const [activeChats, setActiveChats] = useState(Math.floor(10247 * 0.65)) // 65% of online users (less than 75%)
+  const [totalSpent, setTotalSpent] = useState(12847.50) // Total USDT spent on drinks
   const [usedProfiles, setUsedProfiles] = useState<Set<string>>(new Set())
   const [usedMaleProfiles, setUsedMaleProfiles] = useState<Set<string>>(new Set())
   const [matchTimers, setMatchTimers] = useState<{ [key: string]: number }>({})
   const [interactionIndicators, setInteractionIndicators] = useState<{ [key: string]: string }>({})
   const [selectedProfile, setSelectedProfile] = useState<{ name: string; avatar: string } | null>(null)
   const [isJoining, setIsJoining] = useState(false)
+  const [liveActivities, setLiveActivities] = useState<Array<{
+    id: string
+    type: 'match' | 'drink' | 'call' | 'join'
+    user: { name: string; avatar: string }
+    user2?: { name: string; avatar: string }
+    action: string
+    timestamp: Date
+    drinkType?: string
+  }>>([])
 
   const getRandomFemaleProfile = () => {
     const availableProfiles = femaleProfiles.filter((profile) => !usedProfiles.has(profile.avatar))
@@ -144,113 +154,125 @@ export default function DatingAppLanding() {
   }
 
   const getRandomInteractionIndicator = () => {
-    const indicators = ["🥂", "🍸", "✅", "heart"]
+    const indicators = ["🥂", "🍸", "✅", "❤️"]
     return indicators[Math.floor(Math.random() * indicators.length)]
   }
 
-  // Sample match data with diverse female profiles
-  const sampleMatches: Match[] = [
-    {
-      id: "1",
-      user1: {
-        name: "Susan",
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=120&auto=format&fit=crop",
-      },
-      user2: {
-        name: "Michael",
-        avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=120&auto=format&fit=crop",
-      },
+  // Generate sample match data with diverse profiles
+  const generateSampleMatches = (): Match[] => {
+    const matches: Match[] = []
+    const matchCount = 127 // Over 100 matches
+    
+    // Create temporary sets to avoid state updates during generation
+    const tempUsedFemaleProfiles = new Set<string>()
+    const tempUsedMaleProfiles = new Set<string>()
+    
+    for (let i = 0; i < matchCount; i++) {
+      // Get random female profile without state updates
+      const availableFemaleProfiles = femaleProfiles.filter(profile => !tempUsedFemaleProfiles.has(profile.avatar))
+      const femaleProfile = availableFemaleProfiles.length > 0 
+        ? availableFemaleProfiles[Math.floor(Math.random() * availableFemaleProfiles.length)]
+        : femaleProfiles[Math.floor(Math.random() * femaleProfiles.length)]
+      tempUsedFemaleProfiles.add(femaleProfile.avatar)
+      
+      // Get random male profile without state updates
+      const availableMaleProfiles = maleProfiles.filter(profile => !tempUsedMaleProfiles.has(profile.avatar))
+      const maleProfile = availableMaleProfiles.length > 0
+        ? availableMaleProfiles[Math.floor(Math.random() * availableMaleProfiles.length)]
+        : maleProfiles[Math.floor(Math.random() * maleProfiles.length)]
+      tempUsedMaleProfiles.add(maleProfile.avatar)
+      
+      matches.push({
+        id: `match-${i + 1}`,
+        user1: femaleProfile,
+        user2: maleProfile,
+        timestamp: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000), // Random time within last week
+      })
+    }
+    
+    return matches
+  }
+
+  const generateLiveActivity = (): {
+    id: string
+    type: 'match' | 'drink' | 'call' | 'join'
+    user: { name: string; avatar: string }
+    user2?: { name: string; avatar: string }
+    action: string
+    timestamp: Date
+    drinkType?: string
+  } => {
+    const activityTypes = ['match', 'drink', 'call', 'join']
+    const randomType = activityTypes[Math.floor(Math.random() * activityTypes.length)] as 'match' | 'drink' | 'call' | 'join'
+    
+    const user = getRandomFemaleProfile()
+    let action = ''
+    let user2
+    let drinkType
+
+    switch (randomType) {
+      case 'match':
+        user2 = getRandomMaleProfile()
+        action = `just matched with`
+        break
+      case 'drink':
+        const drinks = ['Cocktail', 'Champagne', 'Wine', 'Martini']
+        drinkType = drinks[Math.floor(Math.random() * drinks.length)]
+        action = `bought a`
+        break
+      case 'call':
+        action = `started a call`
+        break
+      case 'join':
+        action = `went online`
+        break
+    }
+
+    return {
+      id: `activity-${Date.now()}-${Math.random()}`,
+      type: randomType,
+      user,
+      user2,
+      action,
       timestamp: new Date(),
-    },
-    {
-      id: "2",
-      user1: {
-        name: "Emma",
-        avatar: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?q=80&w=120&auto=format&fit=crop",
-      },
-      user2: {
-        name: "James",
-        avatar: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=120&auto=format&fit=crop",
-      },
-      timestamp: new Date(),
-    },
-    {
-      id: "3",
-      user1: {
-        name: "Olivia",
-        avatar: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?q=80&w=120&auto=format&fit=crop",
-      },
-      user2: {
-        name: "David",
-        avatar: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?q=80&w=120&auto=format&fit=crop",
-      },
-      timestamp: new Date(),
-    },
-  ]
+      drinkType,
+    }
+  }
 
   useEffect(() => {
-    // Initialize with sample matches
-    setMatches(sampleMatches)
-
+    // Generate initial matches
+    const generatedMatches = generateSampleMatches()
+    setMatches(generatedMatches)
+    
     const initialTimers: { [key: string]: number } = {}
-    sampleMatches.forEach((match) => {
-      initialTimers[match.id] = Math.floor(Math.random() * 360) + 60 // Random time between 1-6 minutes
-    })
-    setMatchTimers(initialTimers)
-
     const initialIndicators: { [key: string]: string } = {}
-    sampleMatches.forEach((match) => {
+    generatedMatches.forEach((match: Match) => {
+      initialTimers[match.id] = Math.floor(Math.random() * 300)
       initialIndicators[match.id] = getRandomInteractionIndicator()
     })
+    setMatchTimers(initialTimers)
     setInteractionIndicators(initialIndicators)
 
-    // Simulate real-time updates
-    const interval = setInterval(() => {
-      setOnlineUsers((prev) => prev + Math.floor(Math.random() * 10) - 5)
-      setActiveChats((prev) => prev + Math.floor(Math.random() * 20) - 10)
-
-      // Occasionally add a new match
-      if (Math.random() > 0.7) {
-        const randomFemale = getRandomFemaleProfile()
-        const randomMale = getRandomMaleProfile()
-        const newMatch: Match = {
-          id: Date.now().toString(),
-          user1: {
-            name: randomFemale.name,
-            avatar: randomFemale.avatar,
-          },
-          user2: {
-            name: randomMale.name,
-            avatar: randomMale.avatar,
-          },
-          timestamp: new Date(),
-        }
-        setMatches((prev) => [newMatch, ...prev.slice(0, 2)])
-
-        setMatchTimers((prev) => ({
-          ...prev,
-          [newMatch.id]: 360, // 6 minutes = 360 seconds
-        }))
-
-        setInteractionIndicators((prev) => ({
-          ...prev,
-          [newMatch.id]: getRandomInteractionIndicator(),
-        }))
-      }
-
-      // Update match timers
+    // Set up timers to update every second
+    const timerInterval = setInterval(() => {
       setMatchTimers((prev) => {
-        const updated = { ...prev }
-        Object.keys(updated).forEach((matchId) => {
-          if (updated[matchId] > 0) {
-            updated[matchId] -= 1
-          }
-        })
-        return updated
+        const newTimers = { ...prev }
+        for (const key in newTimers) {
+          newTimers[key] += 1
+        }
+        return newTimers
       })
-    }, 3000)
+    }, 1000)
 
-    return () => clearInterval(interval)
+    // Live activity generator
+    const activityInterval = setInterval(() => {
+      setLiveActivities(prev => [generateLiveActivity(), ...prev.slice(0, 7)]);
+    }, 2000);
+
+    return () => {
+      clearInterval(timerInterval)
+      clearInterval(activityInterval)
+    }
   }, [])
 
   const handleProfileClick = (profile: { name: string; avatar: string }) => {
@@ -259,12 +281,10 @@ export default function DatingAppLanding() {
 
   const handleJoinChat = () => {
     setIsJoining(true)
-    // Simulate joining process
+    // Simulate joining a chat room
     setTimeout(() => {
-      setIsJoining(false)
-      // Redirect to chat page
-      window.location.href = "/chat"
-    }, 4000)
+      window.location.href = '/chat';
+    }, 1500)
   }
 
   const formatTime = (seconds: number) => {
@@ -278,245 +298,283 @@ export default function DatingAppLanding() {
   }
 
   const handleSendFriendRequest = (name: string) => {
-    console.log(`Sending friend request to ${name}`)
-    setSelectedProfile(null)
+    alert(`Friend request sent to ${name}!`)
+    closeProfileModal()
   }
 
   const handleTabClick = (tab: string) => {
-    switch (tab) {
-      case "discovery":
-        // Already on discovery page
-        break
-      case "chat":
-        window.location.href = "/chat"
-        break
-      case "contacts":
-        window.location.href = "/contacts"
-        break
-      case "profile":
-        // Profile page would go here
-        break
+    if (tab !== "discovery") {
+      window.location.href = `/${tab}`;
+    }
+  };
+
+  const getActivityIcon = (type: string) => {
+    switch (type) {
+      case 'match': return '💕';
+      case 'drink': return '🍸';
+      case 'call': return '📞';
+      case 'join': return '✨';
+      default: return '🎉';
     }
   }
 
+  const getTimeAgo = (timestamp: Date): string => {
+    const now = new Date();
+    const seconds = Math.floor((now.getTime() - timestamp.getTime()) / 1000);
+
+    if (seconds < 60) return `${seconds}s ago`;
+    if (seconds < 3600) return `${Math.floor(seconds / 60)}m ago`;
+    if (seconds < 86400) return `${Math.floor(seconds / 3600)}h ago`;
+    return `${Math.floor(seconds / 86400)}d ago`;
+  };
+
   return (
-    <div className="h-screen bg-black text-white flex items-center justify-center p-4">
-      {/* Single Section Container */}
-      <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-5 shadow-2xl w-full max-w-xs">
-        {/* App Header */}
-        <div className="flex items-center justify-center mb-4">
-          <h1 className="text-xl font-bold text-white">Lovebird</h1>
+    <div className="h-screen flex flex-col font-sans bg-gradient-to-b from-white via-titanium-light to-titanium-mid overflow-hidden">
+      {/* iOS-style status bar spacer with glass effect */}
+      <div className="pt-safe glass-surface flex-shrink-0"></div>
+      
+      {/* Header with Liquid Glass Effect */}
+      <div className="glass-nav text-center p-4 border-b border-glass-border animate-liquid-rise flex-shrink-0">
+        <div className="max-w-sm mx-auto">
+          <h1 className="text-xl font-bold tracking-tight text-text-primary animate-float-gentle">
+            Lovebird
+          </h1>
         </div>
+      </div>
 
-        {/* Matches */}
-        <div className="mb-4">
-          <div className="flex items-center mb-3">
-            <Sparkles className="w-4 h-4 text-white/80 mr-2" />
-            <h2 className="text-sm font-bold text-white/90">Activities</h2>
-          </div>
-
-          <div className="space-y-3">
-            {matches.slice(0, 3).map((match) => (
-              <div key={match.id} className="flex items-center animate-fade-in justify-end">
-                <div className="flex items-center">
-                  <button
-                    onClick={() => handleProfileClick({ name: match.user1.name, avatar: match.user1.avatar })}
-                    className="relative group active:scale-95 transition-transform duration-150"
-                  >
-                    <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-0.5 shadow-md">
-                      <img
-                        src={match.user1.avatar || "/placeholder.svg"}
-                        alt={match.user1.name}
-                        className="w-10 h-10 rounded-lg object-cover"
-                      />
-                    </div>
-                  </button>
-
-                  <div className="mx-3 flex items-center">
-                    <div className="w-5 h-0.5 bg-gradient-to-r from-white/40 to-white/20 rounded-full"></div>
-                    <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-full p-1 mx-2 shadow-md">
-                      {interactionIndicators[match.id] === "heart" ? (
-                        <Heart className="w-2.5 h-2.5 text-white/80 animate-pulse" />
-                      ) : (
-                        <span className="text-sm animate-pulse">{interactionIndicators[match.id]}</span>
-                      )}
-                    </div>
-                    <div className="w-5 h-0.5 bg-gradient-to-r from-white/20 to-white/40 rounded-full"></div>
-                  </div>
-
-                  <button
-                    onClick={() => handleProfileClick({ name: match.user2.name, avatar: match.user2.avatar })}
-                    className="relative group active:scale-95 transition-transform duration-150"
-                  >
-                    <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-xl p-0.5 shadow-md">
-                      <img
-                        src={match.user2.avatar || "/placeholder.svg"}
-                        alt={match.user2.name}
-                        className="w-10 h-10 rounded-lg object-cover"
-                      />
-                    </div>
-                  </button>
-                </div>
-
-                {/* Timer */}
-                <div className="py-1 px-2">
-                  <span
-                    className={`text-xs font-mono font-bold px-0.5 ${
-                      (matchTimers[match.id] || 0) < 60 ? "text-red-400" : "text-white/90"
-                    }`}
-                  >
-                    {formatTime(matchTimers[match.id] || 0)}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Statistics */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
+      {/* Stats Bar with Titanium Gradient */}
+      <div className="titanium-surface px-6 py-3 animate-liquid-rise flex-shrink-0" style={{ animationDelay: "100ms" }}>
+        <div className="flex justify-around max-w-md mx-auto">
           <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <div className="w-3 h-3 bg-green-500 rounded-full mr-2 shadow-md animate-pulse"></div>
-              <span className="text-sm font-bold text-white">{onlineUsers.toLocaleString()}</span>
+            <p className="text-base font-bold text-text-primary">{onlineUsers.toLocaleString()}</p>
+            <div className="flex items-center justify-center space-x-1">
+              <svg className="w-2 h-2 fill-green-500" viewBox="0 0 8 8">
+                <circle cx="4" cy="4" r="4"/>
+              </svg>
+              <p className="text-xs text-text-tertiary font-medium tracking-wide">ONLINE</p>
             </div>
-            <p className="text-white/70 text-xs font-medium">Online </p>
           </div>
           <div className="text-center">
-            <div className="flex items-center justify-center mb-1">
-              <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-lg p-1 mr-2 shadow-md">
-                <MessageCircle className="w-3 h-3 text-white/80" />
-              </div>
-              <span className="text-sm font-bold text-white">{activeChats.toLocaleString()}</span>
+            <p className="text-base font-bold text-text-primary">{activeChats.toLocaleString()}</p>
+            <div className="flex items-center justify-center space-x-1">
+              <svg className="w-3 h-3 fill-blue-500" viewBox="0 0 24 24">
+                <path d="M20 2H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h4l4 4 4-4h4c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/>
+              </svg>
+              <p className="text-xs text-text-tertiary font-medium tracking-wide">CHATTING</p>
             </div>
-            <p className="text-white/70 text-xs font-medium"> Chats</p>
+          </div>
+          <div className="text-center">
+            <p className="text-base font-bold text-text-primary">{matches.length.toLocaleString()}</p>
+            <div className="flex items-center justify-center space-x-1">
+              <svg className="w-3 h-3 fill-pink-500" viewBox="0 0 24 24">
+                <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+              </svg>
+              <p className="text-xs text-text-tertiary font-medium tracking-wide">MATCHES</p>
+            </div>
+          </div>
+          <div className="text-center">
+            <p className="text-base font-bold text-text-primary">{totalSpent.toLocaleString()}</p>
+            <div className="flex items-center justify-center space-x-1">
+              <svg className="w-3 h-3" viewBox="0 0 339 295" fill="none">
+                <path d="M169.5 0L339 147.5L169.5 295L0 147.5L169.5 0Z" fill="#26A17B"/>
+                <path d="M169.5 40.5L299 147.5L169.5 254.5L40 147.5L169.5 40.5Z" fill="white"/>
+                <path d="M169.5 81L258.5 147.5L169.5 214L80.5 147.5L169.5 81Z" fill="#26A17B"/>
+                <path d="M169.5 121.5L218 147.5L169.5 173.5L121 147.5L169.5 121.5Z" fill="white"/>
+                <rect x="159" y="95" width="21" height="105" fill="#26A17B"/>
+                <rect x="144" y="110" width="51" height="21" fill="#26A17B"/>
+                <rect x="144" y="164" width="51" height="21" fill="#26A17B"/>
+              </svg>
+              <p className="text-xs text-text-tertiary font-medium tracking-wide">SPENT</p>
+            </div>
           </div>
         </div>
+      </div>
 
-        {/* CTA Button */}
-        <button
-          onClick={handleJoinChat}
-          disabled={isJoining}
-          className="w-full backdrop-blur-md bg-white/15 border border-white/25 active:bg-white/20 rounded-2xl py-3 px-4 text-white font-bold text-sm transition-all duration-200 active:scale-98 shadow-lg disabled:opacity-70 disabled:cursor-not-allowed"
-        >
-          <div className="flex items-center justify-center">
-            {isJoining ? (
-              <>
-                <div className="mr-2 relative">
-                  {/* Egg */}
-                  <div className="w-8 h-10 bg-gradient-to-b from-white/90 to-white/70 rounded-full relative overflow-hidden border border-white/30">
-                    {/* Crack animation */}
-                    <div className={`absolute inset-0 ${isJoining ? "animate-pulse" : ""}`}>
-                      <div className="absolute top-3 left-3 w-0.5 h-4 bg-gray-600 transform rotate-12"></div>
-                      <div className="absolute top-4 right-2 w-0.5 h-3 bg-gray-600 transform -rotate-45"></div>
-                      <div className="absolute top-2 left-1 w-0.5 h-2 bg-gray-600 transform rotate-45"></div>
+      {/* Main Content with Glass Container - Flex grow to fill remaining space */}
+      <div className="flex-1 flex flex-col px-6 py-4 animate-liquid-rise min-h-0" style={{ animationDelay: "200ms" }}>
+        <div className="max-w-md mx-auto flex flex-col h-full">
+          <div className="text-center mb-4 flex-shrink-0">
+            <h2 className="text-lg font-bold mb-1 text-text-primary">Live Activity</h2>
+            <p className="text-text-secondary text-xs font-medium">See what's happening right now</p>
+          </div>
+
+          {/* Live Activity Feed with Glass Cards - Limited height with scroll */}
+          <div className="flex-1 min-h-0 mb-4">
+            <div className="h-full overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-glass-border scrollbar-track-transparent">
+              {liveActivities.slice(0, 6).map((activity) => (
+                <div
+                  key={activity.id}
+                  className="activity-card p-3 haptic-premium cursor-pointer flex-shrink-0"
+                >
+                  <div className="flex items-center space-x-3">
+                    {/* Activity Icon with Glass Effect */}
+                    <div className="w-10 h-10 glass-card flex items-center justify-center rounded-xl flex-shrink-0">
+                      <span className="text-sm">{getActivityIcon(activity.type)}</span>
                     </div>
 
-                    {/* Baby bird emerging */}
-                    <div
-                      className={`absolute bottom-1 left-1/2 transform -translate-x-1/2 transition-all duration-2000 ease-out ${
-                        isJoining ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"
-                      }`}
-                    >
-                      <div className="w-4 h-4 bg-yellow-400 rounded-full relative animate-bounce">
-                        {/* Bird beak */}
-                        <div className="absolute top-1.5 left-4 w-1.5 h-1 bg-orange-500 rounded-full"></div>
-                        {/* Bird eye */}
-                        <div className="absolute top-1 left-1.5 w-1 h-1 bg-black rounded-full"></div>
-                        {/* Bird wing */}
-                        <div className="absolute top-2 right-0.5 w-1 h-1.5 bg-yellow-300 rounded-full"></div>
+                    {/* User Avatar(s) with Premium Styling */}
+                    {activity.user2 && activity.type === 'match' ? (
+                      /* Overlapping avatars for matches */
+                      <div className="flex flex-shrink-0">
+                        <img
+                          src={activity.user.avatar}
+                          alt={activity.user.name}
+                          className="w-10 h-10 rounded-xl object-cover avatar-premium z-10"
+                        />
+                        <img
+                          src={activity.user2.avatar}
+                          alt={activity.user2.name}
+                          className="w-10 h-10 rounded-xl object-cover avatar-premium -ml-3 border-2 border-white"
+                        />
+                      </div>
+                    ) : (
+                      /* Single avatar for non-match activities */
+                      <img
+                        src={activity.user.avatar}
+                        alt={activity.user.name}
+                        className="w-10 h-10 rounded-xl object-cover avatar-premium flex-shrink-0"
+                      />
+                    )}
+
+                    {/* Activity Content */}
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center space-x-1.5 mb-0.5">
+                        <span className="font-semibold text-text-primary text-xs truncate">
+                          {activity.user.name}
+                        </span>
+                        {activity.user2 && (
+                          <>
+                            <span className="text-text-tertiary text-xs font-medium">
+                              {activity.type === 'match' ? '&' : '+'}
+                            </span>
+                            <span className="font-semibold text-text-primary text-xs truncate">
+                              {activity.user2.name}
+                            </span>
+                          </>
+                        )}
+                      </div>
+                      <div className="flex items-center space-x-1.5">
+                        <span className="text-text-secondary text-xs font-medium">
+                          {activity.action}
+                          {activity.drinkType && (
+                            <>
+                              <span className="font-semibold"> {activity.drinkType}</span>
+                              <span> {activity.type === 'drink' ? '🍸' : ''}</span>
+                            </>
+                          )}
+                        </span>
+                        <span className="text-text-tertiary text-xs">•</span>
+                        <span className="text-text-tertiary text-xs font-medium">
+                          {getTimeAgo(activity.timestamp)}
+                        </span>
                       </div>
                     </div>
                   </div>
                 </div>
-                <span>Joining...</span>
+              ))}
+            </div>
+          </div>
+
+          {/* JOIN Button with Liquid Design */}
+          <button
+            onClick={handleJoinChat}
+            disabled={isJoining}
+            className="w-full liquid-button text-text-inverse font-semibold py-4 px-6 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center space-x-3 haptic-premium flex-shrink-0"
+          >
+            {isJoining ? (
+              <>
+                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                <span className="font-semibold">Connecting...</span>
               </>
             ) : (
-              "Join"
+              <>
+                <Phone className="w-4 h-4" />
+                <span className="font-semibold">JOIN</span>
+              </>
             )}
-          </div>
-        </button>
-
-        {/* Bottom Navigation */}
-        <div className="mt-4 pt-3 border-t border-white/10">
-          <div className="flex justify-around items-center">
-            <button
-              onClick={() => handleTabClick("discovery")}
-              className="flex flex-col items-center p-2 rounded-lg bg-white/15 border border-white/25"
-            >
-              <Home className="w-4 h-4 text-white mb-1" />
-              <span className="text-xs text-white font-medium">Discovery</span>
-            </button>
-            <button
-              onClick={() => handleTabClick("chat")}
-              className="flex flex-col items-center p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <MessageCircle className="w-4 h-4 text-white/60 mb-1" />
-              <span className="text-xs text-white/60 font-medium">Chat</span>
-            </button>
-            <button
-              onClick={() => handleTabClick("contacts")}
-              className="flex flex-col items-center p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <Users className="w-4 h-4 text-white/60 mb-1" />
-              <span className="text-xs text-white/60 font-medium">Contacts</span>
-            </button>
-            <button
-              onClick={() => handleTabClick("profile")}
-              className="flex flex-col items-center p-2 rounded-lg hover:bg-white/10 transition-colors"
-            >
-              <User className="w-4 h-4 text-white/60 mb-1" />
-              <span className="text-xs text-white/60 font-medium">Profile</span>
-            </button>
-          </div>
+          </button>
         </div>
       </div>
-      {/* Profile Modal */}
+
+      {/* Bottom Navigation with Glass Effect */}
+      <div className="glass-nav px-6 py-2 pb-safe animate-liquid-rise flex-shrink-0" style={{ animationDelay: "300ms" }}>
+        <div className="flex justify-around items-center max-w-md mx-auto">
+          <button
+            onClick={() => handleTabClick("discovery")}
+            className="nav-item active flex flex-col items-center py-2 px-3 rounded-xl haptic-premium"
+          >
+            <Globe className="w-4 h-4 mb-1 text-text-primary" />
+            <span className="text-xs font-semibold text-text-primary">Discover</span>
+          </button>
+          
+          <button
+            onClick={() => handleTabClick("chat")}
+            className="nav-item flex flex-col items-center py-2 px-3 rounded-xl haptic-premium"
+          >
+            <MessageCircle className="w-4 h-4 text-text-secondary mb-1" />
+            <span className="text-xs text-text-secondary font-medium">Chat</span>
+          </button>
+          
+          <button
+            onClick={() => handleTabClick("contacts")}
+            className="nav-item flex flex-col items-center py-2 px-3 rounded-xl haptic-premium"
+          >
+            <Users className="w-4 h-4 text-text-secondary mb-1" />
+            <span className="text-xs text-text-secondary font-medium">Contacts</span>
+          </button>
+          
+          <button
+            onClick={() => handleTabClick("profile")}
+            className="nav-item flex flex-col items-center py-2 px-3 rounded-xl haptic-premium"
+          >
+            <User className="w-4 h-4 text-text-secondary mb-1" />
+            <span className="text-xs text-text-secondary font-medium">Profile</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Profile Modal with Premium Glass Effect */}
       {selectedProfile && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-6 shadow-2xl w-full max-w-sm mx-4">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-lg font-bold text-white">{selectedProfile.name}</h3>
-              <button onClick={closeProfileModal} className="text-white/60 hover:text-white text-xl">
-                ×
+        <div className="fixed inset-0 bg-black/40 flex items-end justify-center z-50 backdrop-blur-heavy">
+          <div className="modal-glass rounded-t-5xl w-full max-w-md p-6 animate-slide-up-glass">
+            <div className="w-10 h-1 bg-glass-border rounded-full mx-auto mb-4"></div>
+            
+            <div className="text-center mb-6">
+              <img
+                src={selectedProfile.avatar}
+                alt={selectedProfile.name}
+                className="w-24 h-24 rounded-4xl mx-auto mb-4 object-cover avatar-premium animate-pulse-glass"
+              />
+              <h3 className="text-xl font-bold mb-2 text-text-primary">{selectedProfile.name}</h3>
+              <div className="inline-flex items-center space-x-2 glass-card px-3 py-1 rounded-full">
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-text-secondary text-sm font-medium">Online now</span>
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <button
+                onClick={handleJoinChat}
+                className="w-full liquid-button text-text-inverse font-semibold py-4 px-6 flex items-center justify-center space-x-2 haptic-premium"
+              >
+                <Phone className="w-4 h-4" />
+                <span className="font-semibold">Start Voice Call</span>
+              </button>
+              
+              <button
+                onClick={() => handleSendFriendRequest(selectedProfile.name)}
+                className="w-full liquid-button-secondary text-text-primary font-semibold py-4 px-6 rounded-3xl haptic-premium"
+              >
+                Send Friend Request
+              </button>
+              
+              <button
+                onClick={closeProfileModal}
+                className="w-full text-text-secondary font-medium py-3 haptic-premium rounded-xl"
+              >
+                Cancel
               </button>
             </div>
-
-            <div className="text-center mb-4">
-              <img
-                src={selectedProfile.avatar || "/placeholder.svg"}
-                alt={selectedProfile.name}
-                className="w-24 h-24 rounded-2xl object-cover mx-auto mb-3 shadow-lg"
-              />
-              <p className="text-white/80 text-sm mb-4">
-                {"Loves adventure, coffee, and meaningful conversations. Looking for genuine connections."}
-              </p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 mb-4">
-              <img
-                src={selectedProfile.avatar || "/placeholder.svg"}
-                alt="Photo 1"
-                className="w-full h-16 rounded-lg object-cover"
-              />
-              <img
-                src={selectedProfile.avatar || "/placeholder.svg"}
-                alt="Photo 2"
-                className="w-full h-16 rounded-lg object-cover opacity-80"
-              />
-              <img
-                src={selectedProfile.avatar || "/placeholder.svg"}
-                alt="Photo 3"
-                className="w-full h-16 rounded-lg object-cover opacity-60"
-              />
-            </div>
-
-            <button
-              onClick={() => handleSendFriendRequest(selectedProfile.name)}
-              className="w-full backdrop-blur-md bg-white/15 border border-white/25 active:bg-white/20 rounded-2xl py-3 px-4 text-white font-bold text-sm transition-all duration-200 active:scale-98 shadow-lg"
-            >
-              Send Friend Request
-            </button>
           </div>
         </div>
       )}

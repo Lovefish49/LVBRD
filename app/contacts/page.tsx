@@ -1,7 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { MessageCircle, Home, Users, User, Heart } from "lucide-react"
+import React, { useState } from "react"
+import { MessageCircle, Globe, Users, User, Heart, Phone } from "lucide-react"
 
 interface LockedContact {
   id: string
@@ -78,6 +78,18 @@ const lockedContacts: LockedContact[] = [
     isOnline: true,
     unreadCount: 3,
   },
+  {
+    id: "6",
+    name: "Harper",
+    age: 27,
+    avatar: "https://images.unsplash.com/photo-1506863530036-1efeddceb993?q=80&w=120&auto=format&fit=crop",
+    company: "Healthcare",
+    compatibility: 88,
+    lastMessage: "Great talking with you!",
+    lastMessageTime: "3d ago",
+    isOnline: false,
+    unreadCount: 0,
+  },
 ]
 
 export default function ContactsPage() {
@@ -106,119 +118,120 @@ export default function ContactsPage() {
   }
 
   return (
-    <div className="h-screen bg-black text-white flex flex-col">
-      {/* Header */}
-      <div className="backdrop-blur-md bg-white/10 border-b border-white/20 p-4">
-        <div className="flex items-center justify-center">
-          <h1 className="text-xl font-bold text-white">Locked Contacts</h1>
+    <div className="h-screen flex flex-col font-sans bg-gradient-to-b from-white via-titanium-light to-titanium-mid overflow-hidden">
+      {/* iOS-style status bar spacer with glass effect */}
+      <div className="pt-safe glass-surface flex-shrink-0"></div>
+      
+      {/* Header with Liquid Glass Effect */}
+      <div className="glass-nav text-center p-4 border-b border-glass-border animate-liquid-rise flex-shrink-0">
+        <div className="max-w-sm mx-auto">
+          <h1 className="text-xl font-bold tracking-tight text-text-primary mb-1">Contacts</h1>
+          <p className="text-xs text-text-secondary font-medium">{contacts.length} connections</p>
         </div>
-        <p className="text-center text-white/70 text-sm mt-1">{contacts.length} mutual connections</p>
       </div>
 
-      {/* Contacts List */}
-      <div className="flex-1 overflow-y-auto p-4">
-        {contacts.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="backdrop-blur-md bg-white/10 border border-white/20 rounded-3xl p-8 shadow-2xl">
-              <Heart className="w-12 h-12 text-white/40 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">No Locked Contacts Yet</h3>
-              <p className="text-white/70 text-sm mb-4">
-                Start conversations and lock them to build your contact list!
-              </p>
-              <button
-                onClick={() => handleTabClick("discovery")}
-                className="backdrop-blur-md bg-white/15 border border-white/25 rounded-2xl py-2 px-4 text-white font-semibold text-sm hover:bg-white/20 transition-all duration-200"
-              >
-                Start Discovering
-              </button>
+      {/* Main Content with Glass Container - Flex grow to fill remaining space */}
+      <div className="flex-1 flex flex-col px-6 py-4 animate-liquid-rise min-h-0" style={{ animationDelay: "100ms" }}>
+        <div className="max-w-md mx-auto flex flex-col h-full">
+          {contacts.length > 0 ? (
+            <div className="flex-1 min-h-0">
+              <div className="h-full overflow-y-auto space-y-3 scrollbar-thin scrollbar-thumb-glass-border scrollbar-track-transparent">
+                {contacts.map((contact) => (
+                  <div
+                    key={contact.id}
+                    onClick={() => handleContactClick(contact.id)}
+                    className="activity-card p-4 haptic-premium cursor-pointer flex-shrink-0"
+                  >
+                    <div className="flex items-center space-x-4">
+                      <div className="relative flex-shrink-0">
+                        <img
+                          src={contact.avatar}
+                          alt={contact.name}
+                          className="w-12 h-12 rounded-2xl object-cover avatar-premium"
+                        />
+                        {contact.isOnline && (
+                          <div className="absolute -bottom-0.5 -right-0.5 w-4 h-4 bg-green-500 rounded-full border-2 border-white shadow-sm"></div>
+                        )}
+                      </div>
+                      
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between mb-1">
+                          <h2 className="font-semibold text-text-primary text-sm truncate">{contact.name}</h2>
+                          <span className="text-text-tertiary text-xs font-medium flex-shrink-0 ml-2">
+                            {contact.lastMessageTime}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <p className="text-text-secondary text-xs truncate flex-1">
+                            {contact.lastMessage}
+                          </p>
+                          {contact.unreadCount > 0 && (
+                            <div className="w-5 h-5 bg-surface-primary text-text-inverse text-xs font-bold rounded-full flex items-center justify-center ml-2 flex-shrink-0">
+                              {contact.unreadCount}
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex items-center space-x-2 mt-1">
+                          <span className="text-text-tertiary text-xs font-medium">{contact.company}</span>
+                          <span className="text-text-tertiary text-xs">•</span>
+                          <div className="flex items-center space-x-1">
+                            <Heart className="w-3 h-3 text-red-500 fill-current" />
+                            <span className="text-text-tertiary text-xs font-medium">{contact.compatibility}%</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-3">
-            {contacts.map((contact) => (
-              <button
-                key={contact.id}
-                onClick={() => handleContactClick(contact.id)}
-                className="w-full backdrop-blur-md bg-white/10 border border-white/20 rounded-2xl p-4 shadow-lg hover:bg-white/15 transition-all duration-200 active:scale-98"
-              >
-                <div className="flex items-center space-x-3">
-                  {/* Profile Picture with Online Status */}
-                  <div className="relative">
-                    <img
-                      src={contact.avatar || "/placeholder.svg"}
-                      alt={contact.name}
-                      className="w-14 h-14 rounded-xl object-cover border-2 border-white/20"
-                    />
-                    {contact.isOnline && (
-                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-green-500 rounded-full border-2 border-black"></div>
-                    )}
-                    {contact.unreadCount > 0 && (
-                      <div className="absolute -top-1 -right-1 w-5 h-5 bg-red-500 rounded-full flex items-center justify-center">
-                        <span className="text-xs font-bold text-white">{contact.unreadCount}</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Contact Info */}
-                  <div className="flex-1 text-left">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-semibold text-white">
-                        {contact.name}, {contact.age}
-                      </h3>
-                      <span className="text-xs text-white/60">{contact.lastMessageTime}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs text-white/70">{contact.company}</span>
-                      <div className="flex items-center">
-                        <span className="text-xs text-green-400 font-semibold">{contact.compatibility}% match</span>
-                      </div>
-                    </div>
-
-                    <p className="text-sm text-white/80 truncate">{contact.lastMessage}</p>
-                  </div>
-
-                  {/* Chat Icon */}
-                  <div className="flex-shrink-0">
-                    <MessageCircle className="w-5 h-5 text-white/60" />
-                  </div>
-                </div>
-              </button>
-            ))}
-          </div>
-        )}
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
+              <div className="glass-card w-20 h-20 rounded-5xl flex items-center justify-center mb-6">
+                <Users className="w-10 h-10 text-text-tertiary" />
+              </div>
+              <h2 className="text-xl font-bold mb-2 text-text-primary">No Contacts Yet</h2>
+              <p className="text-text-secondary text-sm max-w-xs">
+                When you match with someone, they'll appear here for future conversations.
+              </p>
+            </div>
+          )}
+        </div>
       </div>
-
-      {/* Bottom Navigation */}
-      <div className="backdrop-blur-md bg-white/10 border-t border-white/20 p-4">
-        <div className="flex justify-around items-center">
+      
+      {/* Bottom Navigation with Glass Effect */}
+      <div className="glass-nav px-6 py-2 pb-safe animate-liquid-rise flex-shrink-0" style={{ animationDelay: "200ms" }}>
+        <div className="flex justify-around items-center max-w-md mx-auto">
           <button
             onClick={() => handleTabClick("discovery")}
-            className="flex flex-col items-center p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="nav-item flex flex-col items-center py-2 px-3 rounded-xl haptic-premium"
           >
-            <Home className="w-4 h-4 text-white/60 mb-1" />
-            <span className="text-xs text-white/60 font-medium">Discovery</span>
+            <Globe className="w-4 h-4 text-text-secondary mb-1" />
+            <span className="text-xs text-text-secondary font-medium">Discover</span>
           </button>
+          
           <button
             onClick={() => handleTabClick("chat")}
-            className="flex flex-col items-center p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="nav-item flex flex-col items-center py-2 px-3 rounded-xl haptic-premium"
           >
-            <MessageCircle className="w-4 h-4 text-white/60 mb-1" />
-            <span className="text-xs text-white/60 font-medium">Chat</span>
+            <MessageCircle className="w-4 h-4 text-text-secondary mb-1" />
+            <span className="text-xs text-text-secondary font-medium">Chat</span>
           </button>
+          
           <button
             onClick={() => handleTabClick("contacts")}
-            className="flex flex-col items-center p-2 rounded-lg bg-white/15 border border-white/25"
+            className="nav-item active flex flex-col items-center py-2 px-3 rounded-xl haptic-premium"
           >
-            <Users className="w-4 h-4 text-white mb-1" />
-            <span className="text-xs text-white font-medium">Contacts</span>
+            <Users className="w-4 h-4 mb-1 text-text-primary" />
+            <span className="text-xs font-semibold text-text-primary">Contacts</span>
           </button>
+          
           <button
             onClick={() => handleTabClick("profile")}
-            className="flex flex-col items-center p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="nav-item flex flex-col items-center py-2 px-3 rounded-xl haptic-premium"
           >
-            <User className="w-4 h-4 text-white/60 mb-1" />
-            <span className="text-xs text-white/60 font-medium">Profile</span>
+            <User className="w-4 h-4 text-text-secondary mb-1" />
+            <span className="text-xs text-text-secondary font-medium">Profile</span>
           </button>
         </div>
       </div>
